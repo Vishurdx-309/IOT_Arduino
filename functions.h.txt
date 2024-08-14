@@ -1,0 +1,116 @@
+void webpage()
+{
+  const char webpageCode[] PROGMEM =R"=====(
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>ESP32 Web Server</title>
+</head>
+<!-------------------------------C S S------------------------------>
+<style>
+  #btn
+  {
+    display: inline-block;
+    text-decoration: none;
+    background: #8CD460;
+    color: rgba(255,255,255, 0.80);
+    font-weight: bold;
+    font: 60px arial, sans-serif;
+    width: 150px;
+    height: 150px;
+    line-height: 150px;
+    border-radius: 50%;
+    text-align: center;
+    vertical-align: middle;
+    overflow: hidden;
+    box-shadow: 0px 0px 0px 8px #8CD460;
+    border: solid 2px rgba(255,255,255, 0.47);
+    transition: 0.5s;
+  }
+  body {text-align:center; font-family:"Calibri"; background-color:rgba(0, 3, 8, 0.26)}
+  h1   {color: rgba(0, 0, 255, 0.87); font-size: 50px;}
+  .container::before{
+    content:"" ;
+    background: url('https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.presentermedia.com%2Fpowerpoint-template%2Finternet-of-things-pid-21955&psig=AOvVaw1_NeFlmg3lehenHaTeltEr&ust=1699214761872000&source=images&cd=vfe&ved=0CBIQjRxqFwoTCNjKxqqSq4IDFQAAAAAdAAAAABAE');
+    opacity: 0.8;
+    height: 88% ;
+    
+    text-align: center ;
+    position: absolute ;
+    width:100% ;             
+    z-index:-1 ;
+    margin-bottom:0 ;
+}
+
+</style>
+<!------------------------------H T M L----------------------------->
+<body>
+  <div class="container">
+  <h1>MaRS IOT Workshop</h1>
+   <h1>ESP 32<br>Turning LED on and OFF</h1>
+   
+   <a href="#" id="btn" ONCLICK='button()'> </a>
+   </div>
+<!-----------------------------JavaScript--------------------------->
+  <script>
+     InitWebSocket()
+     function InitWebSocket()
+     {
+       websock = new WebSocket('ws://'+window.location.hostname+':81/'); 
+       websock.onmessage = function(evt)
+       {
+          JSONobj = JSON.parse(evt.data);
+          document.getElementById('btn').innerHTML = JSONobj.LEDonoff;
+          if(JSONobj.LEDonoff == 'ON')
+          {
+            document.getElementById('btn').style.background='#FF0000';
+            document.getElementById('btn').style["boxShadow"] = "0px 0px 0px 8px #FF0000";
+          }
+          else
+          {
+            document.getElementById('btn').style.background='#111111';
+            document.getElementById('btn').style["boxShadow"] = "0px 0px 0px 8px #111111";
+          }
+       }
+     }
+     //-------------------------------------------------------------
+     function button()
+     {
+        btn = 'LEDonoff=ON';
+        if(document.getElementById('btn').innerHTML == 'ON')
+        {
+          btn = 'LEDonoff=OFF';
+        }
+        websock.send(btn);
+     }
+  </script>
+</body>
+</html>
+)=====";
+  server.send(200 ,"text/html", webpageCode);
+}
+
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t welength)
+{
+  String payloadString = (const char *)payload;
+  Serial.print("payloadString= ");
+  Serial.println(payloadString);
+
+  if(type == WStype_TEXT) //receive text from client
+  {
+    byte separator=payloadString.indexOf('=');
+    String var = payloadString.substring(0,separator);
+    Serial.print("var= ");
+    Serial.println(var);
+    String val = payloadString.substring(separator+1);
+    Serial.print("val= ");
+    Serial.println(val);
+    Serial.println(" ");
+
+    if(var == "LEDonoff")
+    {
+      LEDonoff = false;
+      if(val == "ON") LEDonoff = true;
+    }
+  }
+}
